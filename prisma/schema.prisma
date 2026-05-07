@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Sport {
+  pickleball
+  badminton
+  both
+}
+
+enum SessionSport {
+  pickleball
+  badminton
+}
+
+enum CourtStatus {
+  available
+  in_use
+  closed
+}
+
+enum MatchStatus {
+  pending
+  playing
+  done
+}
+
+model Player {
+  id          Int             @id @default(autoincrement())
+  name        String          @db.VarChar(120)
+  sport       Sport           @default(both)
+  skillLevel  Int             @default(3) @map("skill_level") @db.TinyInt
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  sessions    SessionPlayer[]
+
+  @@map("players")
+}
+
+model Court {
+  id         Int             @id @default(autoincrement())
+  name       String          @db.VarChar(60)
+  sport      Sport           @default(both)
+  status     CourtStatus     @default(available)
+  hourlyRate Decimal         @default(0) @map("hourly_rate") @db.Decimal(10, 2)
+  sessions   SessionCourt[]
+  matches    QueueMatch[]
+
+  @@map("courts")
+}
+
+model Session {
+  id          Int             @id @default(autoincrement())
+  sessionDate DateTime        @map("session_date") @db.Date
+  sport       SessionSport
+  hours       Decimal         @default(2.0) @db.Decimal(4, 2)
+  shuttleCost Decimal         @default(0) @map("shuttle_cost") @db.Decimal(10, 2)
+  miscCost    Decimal         @default(0) @map("misc_cost") @db.Decimal(10, 2)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  courts      SessionCourt[]
+  players     SessionPlayer[]
+  matches     QueueMatch[]
+
+  @@map("sessions")
+}
+
+model SessionCourt {
+  sessionId Int     @map("session_id")
+  courtId   Int     @map("court_id")
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  court     Court   @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, courtId])
+  @@map("session_courts")
+}
+
+model SessionPlayer {
+  sessionId   Int     @map("session_id")
+  playerId    Int     @map("player_id")
+  gamesPlayed Int     @default(0) @map("games_played")
+  session     Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player      Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, playerId])
+  @@map("session_players")
+}
+
+model QueueMatch {
+  id        Int         @id @default(autoincrement())
+  sessionId Int         @map("session_id")
+  roundNo   Int         @map("round_no")
+  courtId   Int?        @map("court_id")
+  teamA     String      @map("team_a") @db.VarChar(255)
+  teamB     String      @map("team_b") @db.VarChar(255)
+  status    MatchStatus @default(pending)
+  createdAt DateTime    @default(now()) @map("created_at")
+  session   Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  court     Court?      @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  @@map("queue_matches")
+}
