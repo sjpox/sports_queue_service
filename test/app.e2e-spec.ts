@@ -4,7 +4,7 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
-describe('AppController (e2e)', () => {
+describe('Players (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
@@ -16,10 +16,12 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('GET /api/players returns an array', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api/players')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        if (!Array.isArray(res.body)) throw new Error('expected array');
+      });
   });
 });
