@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,16 @@ async function main(): Promise<void> {
   await prisma.session.deleteMany();
   await prisma.player.deleteMany();
   await prisma.court.deleteMany();
+  await prisma.user.deleteMany();
+
+  await prisma.user.create({
+    data: {
+      email: 'admin@example.com',
+      name: 'Admin',
+      passwordHash: await bcrypt.hash('admin123', 10),
+      role: 'admin',
+    },
+  });
 
   await prisma.player.createMany({
     data: [
@@ -31,7 +42,7 @@ async function main(): Promise<void> {
     ],
   });
 
-  console.log('Seeded.');
+  console.log('Seeded. Login with admin@example.com / admin123');
 }
 
 main()

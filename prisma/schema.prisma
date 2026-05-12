@@ -13,6 +13,22 @@ enum Sport {
   both
 }
 
+enum UserRole {
+  admin
+  organizer
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique @db.VarChar(160)
+  name         String   @db.VarChar(120)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         UserRole @default(organizer)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
 enum SessionSport {
   pickleball
   badminton
